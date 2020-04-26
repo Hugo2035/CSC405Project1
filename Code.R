@@ -1,8 +1,7 @@
 
 
-#setwd("~/Acad/Projects/H-1B")
-
-#Updates to do : 
+# CSC405/Projects/H-1B")
+# Author: Hugues Mbumba 
 # Create better plotly plots allowing user inputs for years
 # NAISC, Cities csv files from Github
 # More in-depth analysis
