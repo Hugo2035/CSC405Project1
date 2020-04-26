@@ -31,6 +31,38 @@ colnames(Data) <- c("Year","Employer","Initial_Approvals","Initial_Denials"
 
 #apply(Data, 2, function(x){sum(is.na(x))})  #check missing values
 Data[is.na(Data)] <- 0  #Replace missing values
+
+### Is there a decline in approvals----
+a <- Data %>%
+  group_by(Year) %>%
+  summarize(Approvals = sum(Initial_Approvals), Denials = sum(Initial_Denials),
+  C_Approvals = sum(Continuing_Approvals), C_Denials = sum(Continuing_Denials)) %>%
+  mutate(Denial_Rate = Denials/(Approvals+Denials)*100)
+
+#plotly chart:
+plot_ly(a , x = ~Year, y = ~Approvals, type = "scatter", mode = "lines", color = I('dark green'), name = "Approvals") %>%
+  add_trace(x = ~Year, y = ~Denials, type = "scatter", mode = "lines", color = I('red'), name = "Denials") %>%
+  layout(title = "H-1B Visas",
+ xaxis = list(title = "Year"),
+ yaxis = list (title = "Count"))
+
+
+### Top Employers, Industries with most accepts, most denials? -----
+
+#Got the following details from (USCIS) 
+## Top Industries with most approvals/denials -- NAICS -
+Dept <- read.csv("NAICS.csv")
+colnames(Dept) <- c("NAICS","Dept_Name")
+#Dept$NAICS <- as.factor(Dept$NAICS)
+
+# ----
+c <- left_join(Data, Dept)
+c <- c %>%
+  group_by(Year, Dept_Name) %>%
+  summarize(Approvals = sum(Initial_Approvals), Denials = sum(Initial_Denials),
+  C_Approvals = sum(Continuing_Approvals), C_Denials = sum(Continuing_Denials)) %>%
+  mutate(Denial_Rate = round(Denials/(Approvals+Denials)*100, digits=2))
+
                           
 # Use geocode from ggmap to get lat,lon coordinates
 # get_coords <- function(City){
@@ -105,6 +137,6 @@ Data %>%
   left_join(coords_cities, by="City") %>%
   plot_geo(lat = ~lat, lon = ~lon, color = ~Approvals, size=~(Approvals)) %>%
   add_markers(hovertext = ~(paste("City:", City, "\nNo. of Approvals:", Approvals))) %>%
-  layout(title = 'Top cities with H-1B Approvals in 2018 & 2019', geo=g)
+  layout(title = 'Top cities with H-1B Approvals in 2019 & 2020', geo=g)
 
 
