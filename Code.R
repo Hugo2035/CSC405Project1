@@ -63,6 +63,70 @@ c <- c %>%
   C_Approvals = sum(Continuing_Approvals), C_Denials = sum(Continuing_Denials)) %>%
   mutate(Denial_Rate = round(Denials/(Approvals+Denials)*100, digits=2))
 
+# top_apr_dept <- c %>%
+#   group_by(Dept_Name) %>%
+#   summarize(All_apr = sum(Approvals)) %>%
+#   arrange(desc(All_apr)) %>%
+#   top_n(7) %>%
+#   select(Dept_Name)
+# 
+# dept_approval <- c %>%
+#   filter(Dept_Name %in% top_apr_dept$Dept_Name)
+# 
+# dept_approval$Year <- as.numeric(dept_approval$Year)
+
+#Wordcloud
+#require(wordcloud2)
+#wordcloud2(data = dept_approval[c("Dept_Name","Approvals")])
+
+apr_plot <- spread(c[,c('Year','Dept_Name','Approvals')], Dept_Name, Approvals)
+
+# ggplot(dept_approval, aes(x=Year, y=Approvals, color=Dept_Name)) +
+#   geom_line()+
+#   theme_minimal()
+
+#No. of approvals plot
+plot_ly(c, x = ~Year, y=~Approvals, color =~Dept_Name, type='scatter', mode = 'line') %>%
+  #add_lines()%>%
+  #add_trace(x = ~Year, y = ~Denials, type = "scatter", mode = "lines", color = I('red'), name = "Denials") %>%
+  layout(title = "H-1B Visas Approvals by Dept",
+         xaxis = list(title = "Year"),
+         yaxis = list (title = "Count"))
+
+#Denial rate plot
+plot_ly(c, x = ~Year, y=~Denial_Rate, color =~Dept_Name, type='scatter', mode = 'line') %>%
+  layout(title = "H-1B Visas Denials Rate by Dept",
+         xaxis = list(title = "Year"),
+         yaxis = list(range = c(0,50), title = "% Denials"))
+
+
+#### By Employer --------
+## Need to clean 'Employer' field
+length(unique(Data$Employer))
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+drop_words <- function (x) gsub("INC|LLC|L L C|LLP|CORPORATION|CORP", "", x)   #Drop these words
+length(unique(Data$Employer))
+length(unique(trim(Data$Employer)))
+length(unique(trim(drop_words(Data$Employer))))
+
+Data$Employer <- trim(drop_words(Data$Employer))
+
+
+### State, City Wise Analysis ----
+#Plotting top 10 states with max approvals in last 2 years using plotly
+
+Data %>%
+  filter(Year > 2017) %>%
+  group_by(State) %>%
+  summarize(Approvals = sum(Initial_Approvals), Denials = sum(Initial_Denials),
+            C_Approvals = sum(Continuing_Approvals), C_Denials = sum(Continuing_Denials)) %>%
+  arrange(desc(Approvals)) %>%
+  top_n(10, Approvals) %>%
+  plot_ly(x= ~(factor(State, levels=unique(State))[order(Approvals, decreasing = TRUE)]), 
+          y=~Approvals, type='bar') %>%
+  layout(title = "Top 10 States with highest Approvals in 2018, 2019",
+         xaxis = list(title = "State"),
+         yaxis = list (title = "Approvals"))
                           
 # Use geocode from ggmap to get lat,lon coordinates
 # get_coords <- function(City){
